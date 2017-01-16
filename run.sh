@@ -1,11 +1,15 @@
 #!/bin/bash
 
 #LOGIN DATA
-USR=username
-PWD=pa$$word
+USR=username ##You username
+PWD=pa$$word ##You password
+
+CHECKUSERS=1 ##Valid values 0 (don't check), 1 (check)
+
 #CHECK AND CREATE CONFIG
 WORKDIR=/tmp/LF
 ICON="$WORKDIR/favicon.ico"
+touch $WORKDIR/last_topic
 
 if ! [ -d $WORKDIR ]; then
     mkdir $WORKDIR
@@ -14,9 +18,6 @@ fi
 if ! [ -f $ICON ]; then
     wget http://linuxforum.ru/favicon.ico -O $ICON
 fi
-
-touch $WORKDIR/last_topic
-
 while true
 do
 {
@@ -28,31 +29,40 @@ curl -X POST -c cookie "http://linuxforum.ru/login.php" --data "form_sent=1&csrf
 ##GET_DATA
 GETINDEX=`curl -b cookie http://linuxforum.ru/search.php?action=show_recent`
 
+if [ "$CHECKUSERS" == "1" ]
+then
+LASTUSERREG=`curl -b cookie http://linuxforum.ru/index.php | grep "Последним зарегистрировался"`
+
+LASTUNAME=`echo "$LASTUSERREG" | sed 's/.*profile.php?id=.*">//' | sed 's/<\/a>.*//'`
+
+LASTULINK=`echo "$LASTUSERREG" | sed 's/.*href="//' | sed 's/">.*//'`
+fi
+
 MSGCOUNT=`echo "$GETINDEX" | grep main-first-item -A10 |\
-           grep info-replies |\
-            sed 's/.*<strong>//' |\
-             sed 's/<\/strong.*//'`
+       grep info-replies |\
+        sed 's/.*<strong>//' |\
+         sed 's/<\/strong.*//'`
 
 
 TOPICNAME=`echo "$GETINDEX" | grep main-first-item -A10 |\
-           grep 'class="item-num"' |\
-           sed 's/.*viewtopic.php.*">//' |\
-           sed 's/<.*//'`
+       grep 'class="item-num"' |\
+       sed 's/.*viewtopic.php.*">//' |\
+       sed 's/<.*//'`
 
 LFUSER=`echo "$GETINDEX" | grep main-first-item -A10 |\
-        grep info-lastpost |\
-        sed 's/.*<cite>//' |\
-        sed 's/<\/cite.*//'`
+    grep info-lastpost |\
+    sed 's/.*<cite>//' |\
+    sed 's/<\/cite.*//'`
 
 TOPICSTARTER=`echo "$GETINDEX" | grep main-first-item -A10 |\
-              grep item-starter |\
-              sed 's/.*<cite>//' |\
-              sed 's/<\/.*//'`
+          grep item-starter |\
+          sed 's/.*<cite>//' |\
+          sed 's/<\/.*//'`
 
 ALINK=`echo "$GETINDEX" | grep main-first-item -A10 |\
-         grep info-lastpost |\
-          sed 's/.*<a.href="//' |\
-           sed 's/">.*//'`
+     grep info-lastpost |\
+      sed 's/.*<a.href="//' |\
+       sed 's/">.*//'`
 
 POST=`echo $ALINK | sed 's/.*#p//'`
 
@@ -62,10 +72,27 @@ PRETOPICNAME=`tail -n 1 $WORKDIR/last_topic`
 {
 if [ -z $MSGCOUNT ]
 then
-        echo "No connection"
-        sleep 6
+    echo "No connection"
+    sleep 6
 else
-curl -b cookie $ALINK > $WORKDIR/ans
+
+SHOWUSER ()
+{
+LASTUSERDATA=`curl -b cookie "$LASTULINK" |\
+          grep 'h2 class="hn"' -A35 |\
+          sed 's/.*<div.*//g' |\
+          sed 's/<.*\/div.*>//g' |\
+          sed 's/.*<ul.*//g' |\
+          sed 's/.*<\/ul>.*//g' |\
+          sed 's/<li>//g' |\
+          grep -v "^$" |\
+          sed 's/<h2 class="hn">//' |\
+          sed 's/<\/h2>//'`
+
+notify-send -t 0 --icon="$ICON" "$(echo -e "<b>Регистрация нового пользователя</b>")" "$(echo -e "$LASTUSERDATA")"
+        echo "$LASTUNAME" > $WORKDIR/last_user
+        PRELASTUNAME=`echo "$LASTUNAME"`
+}
 
 SHOWMSG ()
 {
@@ -76,24 +103,32 @@ notify-send -t 0 --icon="$ICON" "$(echo -e "<b>@$LFUSER</b> $HEADER <br />$TOPIC
                 echo "$TOPICNAME" >> $WORKDIR/last_topic
                 PREMSGCOUNT=`echo "$MSGCOUNT"`
                 PRETOPICNAME=`echo "$TOPICNAME"`
-
 }
+
+##SHOW NEW USERS
+if [ "$CHECKUSERS" == "1" ]
+    then
+    if [ "$PRELASTUNAME" != "$LASTUNAME" ]
+        then
+        SHOWUSER
+    fi
+fi
 
 ##CHECK CHANGES AND SHOW MESSAGE
     if [ "$MSGCOUNT" = "0" ]
      then 
         HEADER="создал новую тему:"
      else
-            HEADER="ответил в теме:"
+        HEADER="ответил в теме:"
     fi
 
     if [ "$MSGCOUNT" != "$PREMSGCOUNT" ]
     then    
-         SHOWMSG
-         sleep 6
+     SHOWMSG
+     sleep 6
     elif [ "$TOPICNAME" != "$PRETOPICNAME" ]
-         then    
-         SHOWMSG
+     then    
+     SHOWMSG
      sleep 6
     else
      echo No changes
@@ -103,3 +138,4 @@ fi
 }
 }
 done
+
