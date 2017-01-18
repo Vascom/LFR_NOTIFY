@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #####==CONFIG==##############################################################
-USR=diablopc ##You username
-PWD=Grizli1711 ##You password
+USR=username ##You username
+PWD=pa$$word ##You password
 CHECKUSERS=1 ##Valid values 0 (don't check), 1 (check)
 #####==CONFIG==##############################################################
 
