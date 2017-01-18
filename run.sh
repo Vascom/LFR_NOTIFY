@@ -2,7 +2,7 @@
 
 #####==CONFIG==##############################################################
 USR=username ##You username
-PWD=pa$$word ##You password
+PSWD=pa$$word ##You password
 CHECKUSERS=1 ##Valid values 0 (don't check), 1 (check)
 #####==CONFIG==##############################################################
 
@@ -26,7 +26,7 @@ fi
 AUTH ()
 	{
 	csrf=$(curl http://linuxforum.ru/login.php | grep csrf_token | sed 's/.*value="//' | sed 's/".*//')
-	curl -X POST -c $COOKIE "http://linuxforum.ru/login.php" --data "form_sent=1&csrf_token=$csrf&req_username=$USR&req_password=$PWD&login=Войти"
+	curl -X POST -c $COOKIE "http://linuxforum.ru/login.php" --data "form_sent=1&csrf_token=$csrf&req_username=$USR&req_password=$PSWD&login=Войти"
 	}
 
 #GET AND SHOW USER INFO
