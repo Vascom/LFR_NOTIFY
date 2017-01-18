@@ -4,6 +4,7 @@
 USR=username ##You username
 PWD=pa$$word ##You password
 CHECKUSERS=1 ##Valid values 0 (don't check), 1 (check)
+SLEEP_TIME=6 ##Set sleep time
 #####==CONFIG==##############################################################
 
 #CHECK AND CREATE CONFIG
@@ -107,7 +108,7 @@ do
 	{
 	if [ -z $MSGCOUNT ]; then
 		echo "No connection"
-		sleep 6
+		sleep $SLEEP_TIME
 	else
 
 ##SHOW NEW USERS
@@ -126,14 +127,14 @@ do
 
 		if [ "$MSGCOUNT" != "$PREMSGCOUNT" ]; then    
 				SHOWMSG
-				sleep 6
+				sleep $SLEEP_TIME
 		elif [ "$TOPICNAME" != "$PRETOPICNAME" ]
 			then    
 				SHOWMSG
-				sleep 6
+				sleep $SLEEP_TIME
 		else
 				echo No changes
-				sleep 6
+				sleep $SLEEP_TIME
 		fi
 	fi
 	}
