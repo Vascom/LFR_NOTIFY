@@ -9,16 +9,13 @@ CHECKUSERS=1 ##Valid values 0 (don't check), 1 (check)
 #CHECK AND CREATE CONFIG
 WORKDIR=/tmp/LF
 ICON="$WORKDIR/favicon.ico"
-touch $WORKDIR/last_topic
-
 if ! [ -d $WORKDIR ]; then
     mkdir $WORKDIR
 fi
-
 if ! [ -f $ICON ]; then
     wget http://linuxforum.ru/favicon.ico -O $ICON
 fi
-
+touch $WORKDIR/last_topic
 
 ##FUNC-----------------------------------------------------------------------------------------
 #AUTENTICATION
