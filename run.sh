@@ -9,6 +9,7 @@ CHECKUSERS=1 ##Valid values 0 (don't check), 1 (check)
 #CHECK AND CREATE CONFIG
 WORKDIR=/tmp/LF
 ICON="$WORKDIR/favicon.ico"
+COOKIE=$WORKDIR/cookie
 touch $WORKDIR/last_topic
 
 if ! [ -d $WORKDIR ]; then
@@ -25,13 +26,13 @@ fi
 AUTH ()
 	{
 	csrf=$(curl http://linuxforum.ru/login.php | grep csrf_token | sed 's/.*value="//' | sed 's/".*//')
-	curl -X POST -c cookie "http://linuxforum.ru/login.php" --data "form_sent=1&csrf_token=$csrf&req_username=$USR&req_password=$PWD&login=Войти"
+	curl -X POST -c $COOKIE "http://linuxforum.ru/login.php" --data "form_sent=1&csrf_token=$csrf&req_username=$USR&req_password=$PWD&login=Войти"
 	}
 
 #GET AND SHOW USER INFO
 SHOWUSER ()
 	{
-	LASTUSERDATA=`curl -b cookie "$LASTULINK" |\
+	LASTUSERDATA=`curl -b $COOKIE "$LASTULINK" |\
 			grep 'h2 class="hn"' -A35 |\
 			sed 's/.*<div.*//g' |\
 			sed 's/<.*\/div.*>//g' |\
@@ -49,7 +50,7 @@ SHOWUSER ()
 #CREATE AND SHOW MESSAGE
 SHOWMSG ()
 	{	
-	MESSAGE=`curl -b cookie $ALINK | grep "id=\"post$POST\"" -A1000 | grep 'class="postfoot"' -B1000 `
+	MESSAGE=`curl -b $COOKIE $ALINK | grep "id=\"post$POST\"" -A1000 | grep 'class="postfoot"' -B1000 `
 	notify-send -t 0 --icon="$ICON" "$(echo -e "<b>@$LFUSER</b> $HEADER <br />$TOPICNAME")" "$(echo -e "$MESSAGE")"
 	echo "$MSGCOUNT" > $WORKDIR/last_topic
 	echo "$TOPICNAME" >> $WORKDIR/last_topic
@@ -61,7 +62,7 @@ while true
 do
 {
 ##CHECK AUTH AND AUTENTICATE
-		CHECKAUTH=`curl -b cookie http://linuxforum.ru/index.php |\
+		CHECKAUTH=`curl -b $COOKIE http://linuxforum.ru/index.php |\
 			grep "Пожалуйста, войдите или зарегистрируйтесь."`
 
 		if [ "$CHECKAUTH" != "" ]; then
@@ -70,13 +71,13 @@ do
 
 ##GET NEW USERS DATA
 		if [ "$CHECKUSERS" == "1" ]; then
-			LASTUSERREG=`curl -b cookie http://linuxforum.ru/index.php | grep "Последним зарегистрировался"`
+			LASTUSERREG=`curl -b $COOKIE http://linuxforum.ru/index.php | grep "Последним зарегистрировался"`
 			LASTUNAME=`echo "$LASTUSERREG" | sed 's/.*profile.php?id=.*">//' | sed 's/<\/a>.*//'`
 			LASTULINK=`echo "$LASTUSERREG" | sed 's/.*href="//' | sed 's/">.*//'`
 		fi
 
 ##GET DATA
-		GETINDEX=`curl -b cookie http://linuxforum.ru/search.php?action=show_recent`
+		GETINDEX=`curl -b $COOKIE http://linuxforum.ru/search.php?action=show_recent`
 
 ##SORT DATA
 		MSGCOUNT=`echo "$GETINDEX" | grep main-first-item -A10 |\
